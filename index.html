@@ -16,13 +16,16 @@ with
 <select id="docCountSelect">
   <option value="10">10</option>
   <option value="100">100</option>
-  <option value="1000">1000</option>
+  <option value="1000" selected>1000</option>
 </select>
 
 documents</h1>
 
 <div id="writes"></div>
 <div id="reads"></div>
+<div id="bulkwrites"></div>
+<div id="bulkreads"></div>
+
 
 <script type="text/javascript" src="pouchdb.js"></script>
 <script type="text/javascript" src="pouchdb.localstorage.min.js"></script>
@@ -35,6 +38,8 @@ documents</h1>
   var docCountSelect = document.getElementById('docCountSelect');
   var readOutput = document.getElementById('reads');
   var writeOutput = document.getElementById('writes');
+  var bulkReadOutput = document.getElementById('bulkreads');
+  var bulkWriteOutput = document.getElementById('bulkwrites');
 
   adapterSelect.addEventListener('change', function(){
     runTest();
@@ -54,34 +59,70 @@ documents</h1>
     var db = new PouchDB('local', {adapter: adapter});
 
 
-    //Write Test
-    window.performance.mark('start');
-    for(var i = 0; i < docCount; i++){
-      db.put({
-        _id: i.toString(),
-        name: 'test' + i
-      });
-    }
-    window.performance.mark('inserted 100');
-    window.performance.measure('write', 'start', 'inserted 100');
-    writeOutput.innerHTML = window.performance.getEntriesByName('write')[0].duration/docCount + " ms/write";
+    // //Individual Write Test
+    // window.performance.mark('start put');
+    // for(var i = 0; i < docCount; i++){
+    //   db.put({
+    //     _id: i.toString(),
+    //     name: 'test' + i
+    //   });
+    // }
+    // window.performance.mark('end put');
+    // window.performance.measure('write', 'start put', 'end put');
+    // writeOutput.innerHTML = window.performance.getEntriesByName('write')[0].duration/docCount + " ms/write";
 
 
-    //Read Test
-    var endRecord = (docCount-1).toString()
-    for(var i = 0; i < docCount; i++){
-     var test = function(){
-      var id = i.toString();
-      db.get(id)
-        .then(function (doc) {
-          if(id === endRecord){
-            window.performance.mark('read 100');
-            window.performance.measure('read', 'start', 'read 100');
-            readOutput.innerHTML = window.performance.getEntriesByName('read')[0].duration/docCount + " ms/read";
-          }
-      });
-     }()
+    // //Individual Read Test
+    // var endRecord = (docCount-1).toString()
+    // for(var i = 0; i < docCount; i++){
+    //  var test = function(){
+    //   var id = i.toString();
+    //   db.get(id)
+    //     .then(function (doc) {
+    //       if(id === endRecord){
+    //         window.performance.mark('read 100');
+    //         window.performance.measure('read', 'start', 'read 100');
+    //         readOutput.innerHTML = window.performance.getEntriesByName('read')[0].duration/docCount + " ms/read";
+    //       }
+    //   });
+    //  }()
+    // }
+
+
+    //Bulk write test
+    var docsToInsert = [];
+    for(var i = 0; i < docCount; i++) {
+      docsToInsert.push({
+        _id: 'bulk'+i,
+        name: 'bulkTest'+i
+      })
     }
+    window.performance.mark('start bulkinsert')
+    db.bulkDocs({docs : docsToInsert})
+    .then(function(){
+      window.performance.mark('end bulkinsert');
+      window.performance.measure('bulkwrite', 'start bulkinsert', 'end bulkinsert');
+      bulkWriteOutput.innerHTML = window.performance.getEntriesByName('bulkwrite')[0].duration + " ms bulk write";
+    })
+
+    //bulk read test
+    window.performance.mark('start bulkread')
+    db.allDocs({
+      include_docs: true
+    })
+    .then(function(result){
+      window.performance.mark('end allDocs');
+      result.rows.filter(function(row){
+        return row.doc.name === 'bulkTest20';
+      })
+      window.performance.mark('end bulkread');
+      window.performance.measure('bulkread', 'start bulkread', 'end bulkread');
+      window.performance.measure('allDocs', 'start bulkread', 'end allDocs');
+      // bulkReadOutput.innerHTML = window.performance.getEntriesByName('allDocs')[0].duration + " ms/ allDocs query<br>";
+      bulkReadOutput.innerHTML += window.performance.getEntriesByName('bulkread')[0].duration + " ms/ bulk query";
+    })
+
+
 }
 
 runTest();
