@@ -68,8 +68,8 @@ documents</h1>
 
 
     //Read Test
+    var endRecord = (docCount-1).toString()
     for(var i = 0; i < docCount; i++){
-      var endRecord = (docCount-1).toString()
      var test = function(){
       var id = i.toString();
       db.get(id)
