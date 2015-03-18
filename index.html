@@ -119,7 +119,7 @@ documents</h1>
       window.performance.measure('bulkread', 'start bulkread', 'end bulkread');
       window.performance.measure('allDocs', 'start bulkread', 'end allDocs');
       // bulkReadOutput.innerHTML = window.performance.getEntriesByName('allDocs')[0].duration + " ms/ allDocs query<br>";
-      bulkReadOutput.innerHTML += window.performance.getEntriesByName('bulkread')[0].duration + " ms/ bulk query";
+      bulkReadOutput.innerHTML = window.performance.getEntriesByName('bulkread')[0].duration + " ms/ bulk query";
     })
 
 
