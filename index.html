@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+
+<h1>Test
+<select id="adapterSelect">
+  <option value="memory">Memory</option>
+  <option value="localstorage">LocalStorage</option>
+</select>
+
+with
+
+<select id="docCountSelect">
+  <option value="10">10</option>
+  <option value="100">100</option>
+  <option value="1000">1000</option>
+</select>
+
+documents</h1>
+
+<div id="writes"></div>
+<div id="reads"></div>
+
+<script type="text/javascript" src="pouchdb.js"></script>
+<script type="text/javascript" src="pouchdb.localstorage.min.js"></script>
+<script type="text/javascript" src="pouchdb.memory.min.js"></script>
+
+<script>
+
+  //Grab user test configuration
+  var adapterSelect = document.getElementById('adapterSelect');
+  var docCountSelect = document.getElementById('docCountSelect');
+  var readOutput = document.getElementById('reads');
+  var writeOutput = document.getElementById('writes');
+
+  adapterSelect.addEventListener('change', function(){
+    runTest();
+  })
+
+  docCountSelect.addEventListener('change', function(){
+    runTest();
+  })
+
+  function runTest(){
+    //Test setup
+    window.performance.clearMarks();
+    window.performance.clearMeasures();
+    localStorage.clear();
+    var adapter = adapterSelect.value;
+    var docCount = parseInt(docCountSelect.value);
+    var db = new PouchDB('local', {adapter: adapter});
+
+
+    //Write Test
+    window.performance.mark('start');
+    for(var i = 0; i < docCount; i++){
+      db.put({
+        _id: i.toString(),
+        name: 'test' + i
+      });
+    }
+    window.performance.mark('inserted 100');
+    window.performance.measure('write', 'start', 'inserted 100');
+    writeOutput.innerHTML = window.performance.getEntriesByName('write')[0].duration/docCount + " ms/write";
+
+
+    //Read Test
+    for(var i = 0; i < docCount; i++){
+      var endRecord = (docCount-1).toString()
+     var test = function(){
+      var id = i.toString();
+      db.get(id)
+        .then(function (doc) {
+          if(id === endRecord){
+            window.performance.mark('read 100');
+            window.performance.measure('read', 'start', 'read 100');
+            readOutput.innerHTML = window.performance.getEntriesByName('read')[0].duration/docCount + " ms/read";
+          }
+      });
+     }()
+    }
+}
+
+runTest();
+
+
+</script>
+</body>
+</html>
